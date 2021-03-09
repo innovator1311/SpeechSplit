@@ -16,11 +16,11 @@ mel_basis = mel(16000, 1024, fmin=90, fmax=7600, n_mels=80).T
 min_level = np.exp(-100 / 20 * np.log(10))
 b, a = butter_highpass(30, 16000, order=5)
 
-spk2gen = pickle.load(open('assets/spk2gen.pkl', "rb"))
+#spk2gen = pickle.load(open('assets/spk2gen.pkl', "rb"))
 
  
 # Modify as needed
-rootDir = 'assets/wavs'
+rootDir = 'assets/vivos_only_wavs'
 targetDir_f0 = 'assets/raptf0'
 targetDir = 'assets/spmel'
 
@@ -37,14 +37,16 @@ for subdir in sorted(subdirList):
         os.makedirs(os.path.join(targetDir_f0, subdir))    
     _,_, fileList = next(os.walk(os.path.join(dirName,subdir)))
     
-    if spk2gen[subdir] == 'M':
-        lo, hi = 50, 250
-    elif spk2gen[subdir] == 'F':
-        lo, hi = 100, 600
-    else:
-        raise ValueError
+    #if spk2gen[subdir] == 'M':
+    #    lo, hi = 50, 250
+    #elif spk2gen[subdir] == 'F':
+    #    lo, hi = 100, 600
+    #else:
+    #    raise ValueError
+
+    lo, hi = 50, 600
         
-    prng = RandomState(int(subdir[1:])) 
+    prng = RandomState(int(subdir[-2:])) 
     for fileName in sorted(fileList):
         # read audio file
         x, fs = sf.read(os.path.join(dirName,subdir,fileName))

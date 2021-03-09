@@ -13,7 +13,7 @@ from utils import pad_seq_to_2, quantize_f0_torch, quantize_f0_numpy
 
 # use demo data for simplicity
 # make your own validation set as needed
-validation_pt = pickle.load(open('assets/demo.pkl', "rb"))
+validation_pt = pickle.load(open('assets/spmel/val.pkl', "rb"))
 
 class Solver(object):
     """Solver for training"""
