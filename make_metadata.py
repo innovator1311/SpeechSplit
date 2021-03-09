@@ -7,7 +7,7 @@ dirName, subdirList, _ = next(os.walk(rootDir))
 print('Found directory: %s' % dirName)
 
 
-speakers, speaker_val = [], []
+speakers, speakers_val = [], []
 for speaker in sorted(subdirList):
     print('Processing speaker: %s' % speaker)
     utterances = []
