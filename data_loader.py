@@ -14,7 +14,7 @@ from torch.utils.data.sampler import Sampler
 class Utterances(data.Dataset):
     """Dataset class for the Utterances dataset."""
 
-    def __init__(self, root_dir, feat_dir, mode):
+    def __init__(self, root_dir, feat_dir, mode, isTrain):
         """Initialize and preprocess the Utterances dataset."""
         self.root_dir = root_dir
         self.feat_dir = feat_dir
@@ -22,7 +22,11 @@ class Utterances(data.Dataset):
         self.step = 20
         self.split = 0
         
-        metaname = os.path.join(self.root_dir, "train.pkl")
+        if isTrain:
+            metaname = os.path.join(self.root_dir, "train.pkl")
+        else:
+            metaname = os.path.join(self.root_dir, "val.pkl")
+
         meta = pickle.load(open(metaname, "rb"))
         
         manager = Manager()
@@ -156,10 +160,10 @@ class MultiSampler(Sampler):
     
     
 
-def get_loader(hparams):
+def get_loader(hparams, isTrain):
     """Build and return a data loader."""
     
-    dataset = Utterances(hparams.root_dir, hparams.feat_dir, hparams.mode)
+    dataset = Utterances(hparams.root_dir, hparams.feat_dir, hparams.mode, isTrain)
     
     my_collator = MyCollator(hparams)
     
@@ -171,7 +175,7 @@ def get_loader(hparams):
                                   batch_size=hparams.batch_size,
                                   sampler=sampler,
                                   num_workers=hparams.num_workers,
-                                  drop_last=True,
+                                  drop_last=isTrain, #Drop last if is train set
                                   pin_memory=True,
                                   worker_init_fn=worker_init_fn,
                                   collate_fn=my_collator)

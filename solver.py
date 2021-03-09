@@ -18,11 +18,12 @@ validation_pt = pickle.load(open('assets/spmel/val.pkl', "rb"))
 class Solver(object):
     """Solver for training"""
 
-    def __init__(self, vcc_loader, config, hparams):
+    def __init__(self, train_vcc_loader, val_vcc_loader, config, hparams):
         """Initialize configurations."""
 
         # Data loader.
-        self.vcc_loader = vcc_loader
+        self.train_vcc_loader = train_vcc_loader
+        self.val_vcc_loader = val_vcc_loader
         self.hparams = hparams
 
         # Training configurations.
@@ -107,7 +108,8 @@ class Solver(object):
                 
     def train(self):
         # Set data loader.
-        data_loader = self.vcc_loader
+        data_loader = self.train_vcc_loader
+        val_data_loader = self.val_vcc_loader
         
         # Fetch fixed inputs for debugging.
         data_iter = iter(data_loader)
@@ -203,7 +205,7 @@ class Solver(object):
             
 
             # Validation.
-            if (i+1) % self.sample_step == 0:
+            '''if (i+1) % self.sample_step == 0:
                 self.G = self.G.eval()
                 with torch.no_grad():
                     loss_val = []
@@ -225,8 +227,35 @@ class Solver(object):
                 print('Validation loss: {}'.format(val_loss))
                 if self.use_tensorboard:
                     self.writer.add_scalar('Validation_loss', val_loss, i+1)
-                    
+            '''
+            # new validation
+            if (i+1) % self.sample_step == 0:
+                self.G = self.G.eval()
+                self.Interp = self.Interp.eval()
 
+                with torch.no_grad():
+                    loss_val = []
+                    for x_real_org, emb_org, f0_org, len_org in val_data_loader:
+                        
+                        x_real_org = x_real_org.to(self.device)
+                        emb_org = emb_org.to(self.device)
+                        len_org = len_org.to(self.device)
+                        f0_org = f0_org.to(self.device)
+
+                        x_f0 = torch.cat((x_real_org, f0_org), dim=-1)
+                        x_f0_intrp = self.Interp(x_f0, len_org) 
+                        f0_org_intrp = quantize_f0_torch(x_f0_intrp[:,:,-1])[0]
+                        x_f0_intrp_org = torch.cat((x_f0_intrp[:,:,:-1], f0_org_intrp), dim=-1)
+                        
+                        x_identic = self.G(x_f0_intrp_org, x_real_org, emb_org)
+                        g_loss_val = F.mse_loss(x_real_org, x_identic, reduction='sum')
+                        loss_val.append(g_loss_val.item())
+
+                val_loss = np.mean(loss_val) 
+                print('Validation loss: {}'.format(val_loss))
+                if self.use_tensorboard:
+                    self.writer.add_scalar('Validation_loss', val_loss, i+1)
+                    
             # plot test samples
             if (i+1) % self.sample_step == 0:
                 self.G = self.G.eval()
