@@ -235,7 +235,16 @@ class Solver(object):
 
                 with torch.no_grad():
                     loss_val = []
-                    for x_real_org, emb_org, f0_org, len_org in val_data_loader:
+                    #val_data_iter = iter(val_data_loader)
+
+                    for batch in val_data_loader:
+
+                        #try:
+                        x_real_org, emb_org, f0_org, len_org = batch
+                        #except:
+                            #val_data_iter = iter(val_data_loader)
+                            #x_real_org, emb_org, f0_org, len_org = next(val_data_iter)
+                            #continue
                         
                         x_real_org = x_real_org.to(self.device)
                         emb_org = emb_org.to(self.device)
@@ -248,15 +257,16 @@ class Solver(object):
                         x_f0_intrp_org = torch.cat((x_f0_intrp[:,:,:-1], f0_org_intrp), dim=-1)
                         
                         x_identic = self.G(x_f0_intrp_org, x_real_org, emb_org)
-                        g_loss_val = F.mse_loss(x_real_org, x_identic, reduction='sum')
+                        g_loss_val = F.mse_loss(x_real_org, x_identic, reduction='mean')
                         loss_val.append(g_loss_val.item())
 
-                val_loss = np.mean(loss_val) 
-                print('Validation loss: {}'.format(val_loss))
-                if self.use_tensorboard:
-                    self.writer.add_scalar('Validation_loss', val_loss, i+1)
+                    val_loss = np.mean(loss_val) 
+                    print('Validation loss: {}'.format(val_loss))
+                    if self.use_tensorboard:
+                        self.writer.add_scalar('Validation_loss', val_loss, i+1)
                     
             # plot test samples
+            '''
             if (i+1) % self.sample_step == 0:
                 self.G = self.G.eval()
                 with torch.no_grad():
@@ -296,3 +306,4 @@ class Solver(object):
                             im5 = ax5.imshow(melsp_woF, aspect='auto', vmin=min_value, vmax=max_value)
                             plt.savefig(f'{self.sample_dir}/{i+1}_{val_sub[0]}_{k}.png', dpi=150)
                             plt.close(fig) 
+                    '''
